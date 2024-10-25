@@ -1,0 +1,904 @@
+# PIPELINE DEFINITION
+# Name: sms-predictor-training-pipeline
+# Inputs:
+#    data_bucket: str
+#    dataset_uri: str
+#    model_repo: str
+#    model_repo_uri: str
+#    project_id: str
+#    thresholds_dict_str: str
+# Outputs:
+#    model-evaluation-2-kpi: system.Metrics
+#    model-evaluation-2-metrics: system.ClassificationMetrics
+#    model-evaluation-kpi: system.Metrics
+#    model-evaluation-metrics: system.ClassificationMetrics
+components:
+  comp-condition-1:
+    dag:
+      tasks:
+        condition-2:
+          componentRef:
+            name: comp-condition-2
+          inputs:
+            artifacts:
+              pipelinechannel--train-rf-rf_model:
+                componentInputArtifact: pipelinechannel--train-rf-rf_model
+            parameters:
+              pipelinechannel--get-best-model-name-best_model_name:
+                componentInputParameter: pipelinechannel--get-best-model-name-best_model_name
+              pipelinechannel--model-evaluation-approval:
+                componentInputParameter: pipelinechannel--model-evaluation-approval
+              pipelinechannel--model_repo:
+                componentInputParameter: pipelinechannel--model_repo
+              pipelinechannel--project_id:
+                componentInputParameter: pipelinechannel--project_id
+          taskInfo:
+            name: condition-2
+          triggerPolicy:
+            condition: inputs.parameter_values['pipelinechannel--get-best-model-name-best_model_name']
+              == 'RandomForest'
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--train-rf-rf_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--get-best-model-name-best_model_name:
+          parameterType: STRING
+        pipelinechannel--model-evaluation-approval:
+          parameterType: BOOLEAN
+        pipelinechannel--model_repo:
+          parameterType: STRING
+        pipelinechannel--project_id:
+          parameterType: STRING
+  comp-condition-2:
+    dag:
+      tasks:
+        upload-model-to-gcs:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-upload-model-to-gcs
+          inputs:
+            artifacts:
+              model:
+                componentInputArtifact: pipelinechannel--train-rf-rf_model
+            parameters:
+              model_repo:
+                componentInputParameter: pipelinechannel--model_repo
+              project_id:
+                componentInputParameter: pipelinechannel--project_id
+          taskInfo:
+            name: upload-model-to-gcs
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--train-rf-rf_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--get-best-model-name-best_model_name:
+          parameterType: STRING
+        pipelinechannel--model-evaluation-approval:
+          parameterType: BOOLEAN
+        pipelinechannel--model_repo:
+          parameterType: STRING
+        pipelinechannel--project_id:
+          parameterType: STRING
+  comp-condition-3:
+    dag:
+      tasks:
+        condition-4:
+          componentRef:
+            name: comp-condition-4
+          inputs:
+            artifacts:
+              pipelinechannel--train-nb-nb_model:
+                componentInputArtifact: pipelinechannel--train-nb-nb_model
+            parameters:
+              pipelinechannel--get-best-model-name-best_model_name:
+                componentInputParameter: pipelinechannel--get-best-model-name-best_model_name
+              pipelinechannel--model-evaluation-2-approval:
+                componentInputParameter: pipelinechannel--model-evaluation-2-approval
+              pipelinechannel--model_repo:
+                componentInputParameter: pipelinechannel--model_repo
+              pipelinechannel--project_id:
+                componentInputParameter: pipelinechannel--project_id
+          taskInfo:
+            name: condition-4
+          triggerPolicy:
+            condition: inputs.parameter_values['pipelinechannel--get-best-model-name-best_model_name']
+              == 'NaiveBayes'
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--train-nb-nb_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--get-best-model-name-best_model_name:
+          parameterType: STRING
+        pipelinechannel--model-evaluation-2-approval:
+          parameterType: BOOLEAN
+        pipelinechannel--model_repo:
+          parameterType: STRING
+        pipelinechannel--project_id:
+          parameterType: STRING
+  comp-condition-4:
+    dag:
+      tasks:
+        upload-model-to-gcs-2:
+          cachingOptions:
+            enableCache: true
+          componentRef:
+            name: comp-upload-model-to-gcs-2
+          inputs:
+            artifacts:
+              model:
+                componentInputArtifact: pipelinechannel--train-nb-nb_model
+            parameters:
+              model_repo:
+                componentInputParameter: pipelinechannel--model_repo
+              project_id:
+                componentInputParameter: pipelinechannel--project_id
+          taskInfo:
+            name: upload-model-to-gcs-2
+    inputDefinitions:
+      artifacts:
+        pipelinechannel--train-nb-nb_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        pipelinechannel--get-best-model-name-best_model_name:
+          parameterType: STRING
+        pipelinechannel--model-evaluation-2-approval:
+          parameterType: BOOLEAN
+        pipelinechannel--model_repo:
+          parameterType: STRING
+        pipelinechannel--project_id:
+          parameterType: STRING
+  comp-get-best-model-name:
+    executorLabel: exec-get-best-model-name
+    inputDefinitions:
+      parameters:
+        nb_accuracy:
+          parameterType: NUMBER_DOUBLE
+        rf_accuracy:
+          parameterType: NUMBER_DOUBLE
+    outputDefinitions:
+      parameters:
+        best_model_name:
+          parameterType: STRING
+  comp-importer:
+    executorLabel: exec-importer
+    inputDefinitions:
+      parameters:
+        uri:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        artifact:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-model-evaluation:
+    executorLabel: exec-model-evaluation
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        thresholds_dict_str:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        kpi:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+        metrics:
+          artifactType:
+            schemaTitle: system.ClassificationMetrics
+            schemaVersion: 0.0.1
+      parameters:
+        accuracy:
+          parameterType: NUMBER_DOUBLE
+        approval:
+          parameterType: BOOLEAN
+  comp-model-evaluation-2:
+    executorLabel: exec-model-evaluation-2
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        test_set:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+      parameters:
+        thresholds_dict_str:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        kpi:
+          artifactType:
+            schemaTitle: system.Metrics
+            schemaVersion: 0.0.1
+        metrics:
+          artifactType:
+            schemaTitle: system.ClassificationMetrics
+            schemaVersion: 0.0.1
+      parameters:
+        accuracy:
+          parameterType: NUMBER_DOUBLE
+        approval:
+          parameterType: BOOLEAN
+  comp-train-nb:
+    executorLabel: exec-train-nb
+    inputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        nb_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-train-rf:
+    executorLabel: exec-train-rf
+    inputDefinitions:
+      artifacts:
+        features:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        rf_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-train-test-split:
+    executorLabel: exec-train-test-split
+    inputDefinitions:
+      artifacts:
+        dataset:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        dataset_test:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+        dataset_train:
+          artifactType:
+            schemaTitle: system.Dataset
+            schemaVersion: 0.0.1
+  comp-upload-model-to-gcs:
+    executorLabel: exec-upload-model-to-gcs
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        model_repo:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+  comp-upload-model-to-gcs-2:
+    executorLabel: exec-upload-model-to-gcs-2
+    inputDefinitions:
+      artifacts:
+        model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        model_repo:
+          parameterType: STRING
+        project_id:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-get-best-model-name:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - get_best_model_name
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef get_best_model_name(\n    rf_accuracy: float,\n    nb_accuracy:\
+          \ float\n) -> NamedTuple('outputs', [('best_model_name', str)]):\n    '''Outputs\
+          \ the name of the model with the highest accuracy.'''\n\n    # Determine\
+          \ the model with the highest accuracy\n    best_model_name = \"RandomForest\"\
+          \ if rf_accuracy >= nb_accuracy else \"NaiveBayes\"\n\n    outputs = NamedTuple('outputs',\
+          \ [('best_model_name', str)])\n    return outputs(best_model_name)\n\n"
+        image: python:3.10.7-slim
+    exec-importer:
+      importer:
+        artifactUri:
+          runtimeParameter: uri
+        typeSchema:
+          schemaTitle: system.Dataset
+          schemaVersion: 0.0.1
+    exec-model-evaluation:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_evaluation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn==1.3.2'\
+          \ 'numpy' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_evaluation(\n    test_set: Input[Dataset],\n    model:\
+          \ Input[Model],\n    thresholds_dict_str: str,\n    metrics: Output[ClassificationMetrics],\n\
+          \    kpi: Output[Metrics]\n) -> NamedTuple('outputs', [('approval',bool),('accuracy',\
+          \ float)]):\n\n    import pandas as pd\n    from sklearn.metrics import\
+          \ roc_curve, confusion_matrix, accuracy_score\n    import json\n    import\
+          \ pickle\n    from numpy import nan_to_num\n\n    def threshold_check(val1,\
+          \ val2):\n        return val1 >= val2\n\n    # Load the test dataset\n \
+          \   data = pd.read_csv(test_set.path + \".csv\")\n\n    # Load the saved\
+          \ pipeline (with both vectorizer and classifier)\n    m_filename = model.path\
+          \ + \".pkl\"\n    model = pickle.load(open(m_filename, 'rb'))\n\n    # Prepare\
+          \ test data\n    X_test = data['message']  # Pass only 'message' column\
+          \ as features\n    y_target = data['label']  # 'label' is the target column\n\
+          \n    # Predict and calculate scores\n    y_pred = model.predict(X_test)\n\
+          \    y_scores = model.predict_proba(X_test)[:, 1]\n\n    # Calculate ROC\
+          \ curve values\n    fpr, tpr, thresholds = roc_curve(\n         y_true=y_target,\
+          \ y_score=y_scores, pos_label=True\n    )\n    thresholds = nan_to_num(thresholds)\
+          \   \n    metrics.log_roc_curve(fpr, tpr, thresholds)  \n\n    # Log confusion\
+          \ matrix\n    metrics.log_confusion_matrix(\n        ['Negative', 'Positive'],\n\
+          \         confusion_matrix(y_target, y_pred).tolist(), \n    )\n\n    #\
+          \ Calculate and log accuracy\n    accuracy = accuracy_score(y_target, y_pred)\n\
+          \    thresholds_dict = json.loads(thresholds_dict_str)\n    kpi.log_metric(\"\
+          accuracy\", float(accuracy))\n\n    # Approval check based on the threshold\n\
+          \    outputs = NamedTuple('outputs', [('approval',bool),('accuracy', float)])\n\
+          \    approval_value = threshold_check(float(accuracy), int(thresholds_dict['roc']))\n\
+          \    return outputs(approval_value, accuracy)\n\n"
+        image: python:3.10.7-slim
+    exec-model-evaluation-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - model_evaluation
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn==1.3.2'\
+          \ 'numpy' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef model_evaluation(\n    test_set: Input[Dataset],\n    model:\
+          \ Input[Model],\n    thresholds_dict_str: str,\n    metrics: Output[ClassificationMetrics],\n\
+          \    kpi: Output[Metrics]\n) -> NamedTuple('outputs', [('approval',bool),('accuracy',\
+          \ float)]):\n\n    import pandas as pd\n    from sklearn.metrics import\
+          \ roc_curve, confusion_matrix, accuracy_score\n    import json\n    import\
+          \ pickle\n    from numpy import nan_to_num\n\n    def threshold_check(val1,\
+          \ val2):\n        return val1 >= val2\n\n    # Load the test dataset\n \
+          \   data = pd.read_csv(test_set.path + \".csv\")\n\n    # Load the saved\
+          \ pipeline (with both vectorizer and classifier)\n    m_filename = model.path\
+          \ + \".pkl\"\n    model = pickle.load(open(m_filename, 'rb'))\n\n    # Prepare\
+          \ test data\n    X_test = data['message']  # Pass only 'message' column\
+          \ as features\n    y_target = data['label']  # 'label' is the target column\n\
+          \n    # Predict and calculate scores\n    y_pred = model.predict(X_test)\n\
+          \    y_scores = model.predict_proba(X_test)[:, 1]\n\n    # Calculate ROC\
+          \ curve values\n    fpr, tpr, thresholds = roc_curve(\n         y_true=y_target,\
+          \ y_score=y_scores, pos_label=True\n    )\n    thresholds = nan_to_num(thresholds)\
+          \   \n    metrics.log_roc_curve(fpr, tpr, thresholds)  \n\n    # Log confusion\
+          \ matrix\n    metrics.log_confusion_matrix(\n        ['Negative', 'Positive'],\n\
+          \         confusion_matrix(y_target, y_pred).tolist(), \n    )\n\n    #\
+          \ Calculate and log accuracy\n    accuracy = accuracy_score(y_target, y_pred)\n\
+          \    thresholds_dict = json.loads(thresholds_dict_str)\n    kpi.log_metric(\"\
+          accuracy\", float(accuracy))\n\n    # Approval check based on the threshold\n\
+          \    outputs = NamedTuple('outputs', [('approval',bool),('accuracy', float)])\n\
+          \    approval_value = threshold_check(float(accuracy), int(thresholds_dict['roc']))\n\
+          \    return outputs(approval_value, accuracy)\n\n"
+        image: python:3.10.7-slim
+    exec-train-nb:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_nb
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn==1.3.2'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_nb(features: Input[Dataset], nb_model: Output[Model]):\n\
+          \    '''Train a Naive Bayes (MultinomialNB) using message text as features\
+          \ and label as the target'''\n    import pandas as pd\n    from sklearn.naive_bayes\
+          \ import MultinomialNB\n    from sklearn.pipeline import Pipeline\n    from\
+          \ sklearn.feature_extraction.text import TfidfVectorizer\n    import pickle\n\
+          \n    # Load the dataset, handling encoding for any special characters\n\
+          \    data = pd.read_csv(features.path + \".csv\", encoding=\"utf-8\")\n\n\
+          \    # Separate features and target\n    X = data['message']    # Message\
+          \ column as the feature\n    y = data['label']      # Label column as the\
+          \ target\n\n    # Define the pipeline for MultinomialNB\n    nb_pipeline\
+          \ = Pipeline([\n        ('vectorizer', TfidfVectorizer()),       # Convert\
+          \ text to TF-IDF features\n        ('classifier', MultinomialNB())     \
+          \     # MultinomialNB pipeline\n    ])\n\n    # Train the Naive Bayes pipeline\n\
+          \    nb_pipeline.fit(X, y)\n\n    # Save Naive Bayes model\n    nb_model.metadata[\"\
+          framework\"] = \"NaiveBayes\"\n    nb_file_name = nb_model.path + f\".pkl\"\
+          \n    with open(nb_file_name, 'wb') as file:  \n        pickle.dump(nb_pipeline,\
+          \ file)\n\n"
+        image: python:3.10.7-slim
+    exec-train-rf:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_rf
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn==1.3.2'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_rf(features: Input[Dataset], rf_model: Output[Model]):\n\
+          \    '''Train a RandomForestClassifier using message text as features and\
+          \ label as the target'''\n    import pandas as pd\n    from sklearn.ensemble\
+          \ import RandomForestClassifier\n    from sklearn.pipeline import Pipeline\n\
+          \    from sklearn.feature_extraction.text import TfidfVectorizer\n    import\
+          \ pickle\n\n    # Load the dataset, handling encoding for any special characters\n\
+          \    data = pd.read_csv(features.path + \".csv\", encoding=\"utf-8\")\n\n\
+          \    # Separate features and target\n    X = data['message']    # Message\
+          \ column as the feature\n    y = data['label']      # Label column as the\
+          \ target\n\n    # Define the pipeline: text vectorization and classifier\n\
+          \    pipeline = Pipeline([\n        ('vectorizer', TfidfVectorizer()), \
+          \    # Convert text to TF-IDF features\n        ('classifier', RandomForestClassifier())\
+          \  # Train the RandomForestClassifier\n    ])\n\n    # Fit the pipeline\
+          \ to the data\n    pipeline.fit(X, y)\n\n    # Save metadata and the model\n\
+          \    rf_model.metadata[\"framework\"] = \"RandomForest\"\n    file_name\
+          \ = rf_model.path + f\".pkl\"\n    with open(file_name, 'wb') as file: \
+          \ \n        pickle.dump(pipeline, file)\n\n"
+        image: python:3.10.7-slim
+    exec-train-test-split:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - train_test_split
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'pandas' 'scikit-learn==1.3.2'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef train_test_split(dataset: Input[Dataset], dataset_train: Output[Dataset],\
+          \ dataset_test: Output[Dataset]):\n    '''train_test_split'''\n    import\
+          \ pandas as pd\n    import logging \n    import sys\n    from sklearn.model_selection\
+          \ import train_test_split as tts\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO) \n\n    alldata = pd.read_csv(dataset.path, index_col=None)\n\
+          \    train, test = tts(alldata, test_size=0.3)\n    train.to_csv(dataset_train.path\
+          \ + \".csv\" , index=False, encoding='utf-8-sig')\n    test.to_csv(dataset_test.path\
+          \ + \".csv\" , index=False, encoding='utf-8-sig')\n\n"
+        image: python:3.10.7-slim
+    exec-upload-model-to-gcs:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - upload_model_to_gcs
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'google-cloud-storage'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef upload_model_to_gcs(project_id: str, model_repo: str, model:\
+          \ Input[Model]):\n    '''upload model to gsc'''\n    from google.cloud import\
+          \ storage   \n    import logging \n    import sys\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO)    \n\n    # upload the model to GCS\n    client =\
+          \ storage.Client(project=project_id)\n    bucket = client.bucket(model_repo)\n\
+          \    blob = bucket.blob('model.pkl')\n    source_file_name= model.path +\
+          \ '.pkl'\n\n    blob.upload_from_filename(source_file_name)    \n\n    print(f\"\
+          File {source_file_name} uploaded to {model_repo}.\")\n\n"
+        image: python:3.10.7-slim
+    exec-upload-model-to-gcs-2:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - upload_model_to_gcs
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'google-cloud-storage'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef upload_model_to_gcs(project_id: str, model_repo: str, model:\
+          \ Input[Model]):\n    '''upload model to gsc'''\n    from google.cloud import\
+          \ storage   \n    import logging \n    import sys\n\n    logging.basicConfig(stream=sys.stdout,\
+          \ level=logging.INFO)    \n\n    # upload the model to GCS\n    client =\
+          \ storage.Client(project=project_id)\n    bucket = client.bucket(model_repo)\n\
+          \    blob = bucket.blob('model.pkl')\n    source_file_name= model.path +\
+          \ '.pkl'\n\n    blob.upload_from_filename(source_file_name)    \n\n    print(f\"\
+          File {source_file_name} uploaded to {model_repo}.\")\n\n"
+        image: python:3.10.7-slim
+pipelineInfo:
+  name: sms-predictor-training-pipeline
+root:
+  dag:
+    outputs:
+      artifacts:
+        model-evaluation-2-kpi:
+          artifactSelectors:
+          - outputArtifactKey: kpi
+            producerSubtask: model-evaluation-2
+        model-evaluation-2-metrics:
+          artifactSelectors:
+          - outputArtifactKey: metrics
+            producerSubtask: model-evaluation-2
+        model-evaluation-kpi:
+          artifactSelectors:
+          - outputArtifactKey: kpi
+            producerSubtask: model-evaluation
+        model-evaluation-metrics:
+          artifactSelectors:
+          - outputArtifactKey: metrics
+            producerSubtask: model-evaluation
+    tasks:
+      condition-1:
+        componentRef:
+          name: comp-condition-1
+        dependentTasks:
+        - get-best-model-name
+        - model-evaluation
+        - train-rf
+        inputs:
+          artifacts:
+            pipelinechannel--train-rf-rf_model:
+              taskOutputArtifact:
+                outputArtifactKey: rf_model
+                producerTask: train-rf
+          parameters:
+            pipelinechannel--get-best-model-name-best_model_name:
+              taskOutputParameter:
+                outputParameterKey: best_model_name
+                producerTask: get-best-model-name
+            pipelinechannel--model-evaluation-approval:
+              taskOutputParameter:
+                outputParameterKey: approval
+                producerTask: model-evaluation
+            pipelinechannel--model_repo:
+              componentInputParameter: model_repo
+            pipelinechannel--project_id:
+              componentInputParameter: project_id
+        taskInfo:
+          name: condition-1
+        triggerPolicy:
+          condition: inputs.parameter_values['pipelinechannel--model-evaluation-approval']
+            == true
+      condition-3:
+        componentRef:
+          name: comp-condition-3
+        dependentTasks:
+        - get-best-model-name
+        - model-evaluation-2
+        - train-nb
+        inputs:
+          artifacts:
+            pipelinechannel--train-nb-nb_model:
+              taskOutputArtifact:
+                outputArtifactKey: nb_model
+                producerTask: train-nb
+          parameters:
+            pipelinechannel--get-best-model-name-best_model_name:
+              taskOutputParameter:
+                outputParameterKey: best_model_name
+                producerTask: get-best-model-name
+            pipelinechannel--model-evaluation-2-approval:
+              taskOutputParameter:
+                outputParameterKey: approval
+                producerTask: model-evaluation-2
+            pipelinechannel--model_repo:
+              componentInputParameter: model_repo
+            pipelinechannel--project_id:
+              componentInputParameter: project_id
+        taskInfo:
+          name: condition-3
+        triggerPolicy:
+          condition: inputs.parameter_values['pipelinechannel--model-evaluation-2-approval']
+            == true
+      get-best-model-name:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-get-best-model-name
+        dependentTasks:
+        - model-evaluation
+        - model-evaluation-2
+        inputs:
+          parameters:
+            nb_accuracy:
+              taskOutputParameter:
+                outputParameterKey: accuracy
+                producerTask: model-evaluation-2
+            rf_accuracy:
+              taskOutputParameter:
+                outputParameterKey: accuracy
+                producerTask: model-evaluation
+        taskInfo:
+          name: get-best-model-name
+      importer:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-importer
+        inputs:
+          parameters:
+            uri:
+              componentInputParameter: dataset_uri
+        taskInfo:
+          name: importer
+      model-evaluation:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-evaluation
+        dependentTasks:
+        - train-rf
+        - train-test-split
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: rf_model
+                producerTask: train-rf
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: dataset_test
+                producerTask: train-test-split
+          parameters:
+            thresholds_dict_str:
+              componentInputParameter: thresholds_dict_str
+        taskInfo:
+          name: model-evaluation
+      model-evaluation-2:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-model-evaluation-2
+        dependentTasks:
+        - train-nb
+        - train-test-split
+        inputs:
+          artifacts:
+            model:
+              taskOutputArtifact:
+                outputArtifactKey: nb_model
+                producerTask: train-nb
+            test_set:
+              taskOutputArtifact:
+                outputArtifactKey: dataset_test
+                producerTask: train-test-split
+          parameters:
+            thresholds_dict_str:
+              componentInputParameter: thresholds_dict_str
+        taskInfo:
+          name: model-evaluation-2
+      train-nb:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-nb
+        dependentTasks:
+        - train-test-split
+        inputs:
+          artifacts:
+            features:
+              taskOutputArtifact:
+                outputArtifactKey: dataset_train
+                producerTask: train-test-split
+        taskInfo:
+          name: train-nb
+      train-rf:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-rf
+        dependentTasks:
+        - train-test-split
+        inputs:
+          artifacts:
+            features:
+              taskOutputArtifact:
+                outputArtifactKey: dataset_train
+                producerTask: train-test-split
+        taskInfo:
+          name: train-rf
+      train-test-split:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-train-test-split
+        dependentTasks:
+        - importer
+        inputs:
+          artifacts:
+            dataset:
+              taskOutputArtifact:
+                outputArtifactKey: artifact
+                producerTask: importer
+        taskInfo:
+          name: train-test-split
+  inputDefinitions:
+    parameters:
+      data_bucket:
+        parameterType: STRING
+      dataset_uri:
+        parameterType: STRING
+      model_repo:
+        parameterType: STRING
+      model_repo_uri:
+        parameterType: STRING
+      project_id:
+        parameterType: STRING
+      thresholds_dict_str:
+        parameterType: STRING
+  outputDefinitions:
+    artifacts:
+      model-evaluation-2-kpi:
+        artifactType:
+          schemaTitle: system.Metrics
+          schemaVersion: 0.0.1
+      model-evaluation-2-metrics:
+        artifactType:
+          schemaTitle: system.ClassificationMetrics
+          schemaVersion: 0.0.1
+      model-evaluation-kpi:
+        artifactType:
+          schemaTitle: system.Metrics
+          schemaVersion: 0.0.1
+      model-evaluation-metrics:
+        artifactType:
+          schemaTitle: system.ClassificationMetrics
+          schemaVersion: 0.0.1
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0
