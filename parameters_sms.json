@@ -3,6 +3,6 @@
   "data_bucket": "data_de2024_bz",
   "dataset_uri":"gs://data_de2024_bz/SMS_preporcessed.csv",
   "model_repo":"models_de2024_bz",
-  "thresholds_dict_str":"{'roc':0.8}",
+  "thresholds_dict_str":"{\"roc\":0.8}",
   "model_repo_uri":"gs://models_de2024_bz"
 }
