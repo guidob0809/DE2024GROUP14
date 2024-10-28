@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SMS Spam Detection - Result</title>
+</head>
+<body>
+
+<h1>Classification Result</h1>
+
+<p><strong>Message:</strong> {{ smsContent }}</p>
+<p><strong>Prediction:</strong> <span style="color: {{ classificationResult == 'Not Spam' ? 'green' : 'red' }}">{{ classificationResult }}</span></p>
+
+<a href="/input">Classify Another Message</a>
+
+</body>
+</html>
