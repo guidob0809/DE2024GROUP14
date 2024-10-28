@@ -50,4 +50,5 @@ class SMSPredictor:
         result = ["true" if pred == 1 else "false" for pred in predictions]
 
         # Return predictions in a structured JSON response
-        return result
+        # return result
+        return jsonify({'result': str(result)}), 200
