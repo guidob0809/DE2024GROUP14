@@ -47,7 +47,7 @@ class SMSPredictor:
 
         # Make predictions
         predictions = self.model.predict(message_tfidf)
-        result = ["Spam" if pred == 1 else "Not Spam" for pred in predictions]
+        result = ["true" if pred == 1 else "false" for pred in predictions]
 
         # Return predictions in a structured JSON response
-        return {"predictions": result}
+        return result
