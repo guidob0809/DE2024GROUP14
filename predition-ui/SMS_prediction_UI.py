@@ -32,7 +32,7 @@ def predict_sms():
         res = requests.post(predictor_api_url, json=json.loads(json.dumps(prediction_input)))
 
         # Extract prediction result from the response
-        prediction_value = res.json()['predictions'][0]
+        prediction_value = res.json()['predictions']
         logging.info("Prediction Output : %s", prediction_value)
 
         # Return the prediction result to the response page
