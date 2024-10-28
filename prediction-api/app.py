@@ -12,7 +12,7 @@ app.config["DEBUG"] = True
 @app.route('/predict_classification/', methods=['POST']) # path of the endpoint. Except only HTTP POST request
 def predict_str():
     # the prediction input data in the message body as a JSON payload
-    prediction_input = request.get_json()
+    prediction_inout = request.get_json()
     return dp.predict_classification(prediction_inout)
 
 
