@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-import pickle
+import joblib
 from io import StringIO
 from flask import jsonify
 
@@ -17,7 +17,7 @@ class SMSPredictor:
         """
         Load the machine learning model from a pickle file.
         """
-        self.model = pickle.load(open(model_file_path, 'rb'))
+        self.model = joblib.load(model_file_path)
 
     def fit_tfidf(self, messages):
         """
@@ -33,11 +33,11 @@ class SMSPredictor:
         if self.model is None:
             try:
                 model_repo = os.environ['MODEL_REPO']
-                model_file_path = os.path.join(model_repo, "model.pkl")
-                self.model = pickle.load(open(model_file_path, 'rb'))
+                model_file_path = os.path.join(model_repo, "model.joblib")
+                self.model = joblib.load(open(model_file_path, 'rb'))
             except KeyError:
                 print("MODEL_REPO is undefined")
-                self.model = pickle.load(open('model.pkl', 'rb'))
+                self.model = joblib.load(open('model.joblib', 'rb'))
 
         # Convert the input into a DataFrame for consistency
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
