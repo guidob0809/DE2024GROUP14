@@ -13,7 +13,7 @@ app.config["DEBUG"] = True
 def predict_str():
     # the prediction input data in the message body as a JSON payload
     prediction_inout = request.get_json()
-    return jsonify({'result': status}), 200
+    return dp.predict_classification(prediction_inout)
 
 
 dp = SMSPredictor()
