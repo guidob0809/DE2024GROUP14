@@ -3,7 +3,7 @@ import os
 from flask import Flask, request
 
 from sms_predictor_API import SMSPredictor
-from flask import jsonify
+
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -13,7 +13,7 @@ app.config["DEBUG"] = True
 def predict_str():
     # the prediction input data in the message body as a JSON payload
     prediction_input = request.get_json()
-    return dp.predict_classification(prediction_input)
+    return dp.predict_classification(prediction_inout)
 
 
 dp = SMSPredictor()
