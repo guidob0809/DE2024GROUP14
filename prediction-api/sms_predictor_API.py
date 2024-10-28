@@ -3,6 +3,7 @@ import logging
 import os
 import pickle
 from io import StringIO
+from flask import jsonify
 
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
