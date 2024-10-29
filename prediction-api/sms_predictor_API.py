@@ -4,10 +4,9 @@ import os
 import joblib
 from io import StringIO
 from flask import jsonify
-
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+import kfp
 class SMSPredictor:
     def __init__(self):
         self.model = None
