@@ -10,19 +10,19 @@ import kfp
 class SMSPredictor:
     def __init__(self):
         self.model = None
-        self.tfidf = TfidfVectorizer()  # Initialize TfidfVectorizer directly
+        #self.tfidf = TfidfVectorizer()  # Initialize TfidfVectorizer directly
 
     def load_model(self, model_file_path):
         """
-        Load the machine learning model from a pickle file.
+        Load the machine learning model from a joblib file.
         """
         self.model = joblib.load(model_file_path)
 
-    def fit_tfidf(self, messages):
-        """
-        Fit the TF-IDF vectorizer on the training data.
-        """
-        self.tfidf.fit(messages)
+    #def fit_tfidf(self, messages):
+      #  """
+      #  Fit the TF-IDF vectorizer on the training data.
+      #  """
+      # self.tfidf.fit(messages)
 
     def predict_classification(self, prediction_input):
         """
@@ -43,10 +43,10 @@ class SMSPredictor:
         messages = df['message'].values
 
         # Transform the input message using the loaded TF-IDF vectorizer
-        message_tfidf = self.tfidf.transform(messages)
+        #message_tfidf = self.tfidf.transform(messages)
 
         # Make predictions
-        predictions = self.model.predict(message_tfidf)
+        predictions = self.model.predict(messages)
         result = ["true" if pred == 1 else "false" for pred in predictions]
 
         # Return predictions in a structured JSON response
