@@ -47,7 +47,8 @@ class SMSPredictor:
 
         # Make predictions
         predictions = self.model.predict(messages)
-        result = ["true" if pred == 1 else "false" for pred in predictions]
+        logging.info(type(predictions))
+        result = predictions[0]
 
         # Return predictions in a structured JSON response
         # return result
