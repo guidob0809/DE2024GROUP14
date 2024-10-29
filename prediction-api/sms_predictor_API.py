@@ -40,7 +40,7 @@ class SMSPredictor:
 
         # Convert the input into a DataFrame for consistency
         df = pd.read_json(StringIO(json.dumps(prediction_input)), orient='records')
-        messages = df['message'].values
+        messages = df['message'].fillna("").astype(str).str.lower()
 
         # Transform the input message using the loaded TF-IDF vectorizer
         #message_tfidf = self.tfidf.transform(messages)
